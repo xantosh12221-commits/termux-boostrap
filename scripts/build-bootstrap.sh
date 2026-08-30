@@ -29,6 +29,8 @@ TERMUX_PACKAGES_DIR="/home/builder/termux-packages"
 # 1. Clone/Setup termux-packages repository
 # ------------------------------------------------------------------------------
 echo "[*] Setting up termux-packages repository..."
+cd /home/builder
+
 if [ ! -f "${TERMUX_PACKAGES_DIR}/build-package.sh" ] || [ ! -f "${TERMUX_PACKAGES_DIR}/scripts/properties.sh" ]; then
     echo "[*] Cloning fresh termux/termux-packages into ${TERMUX_PACKAGES_DIR}..."
     rm -rf "${TERMUX_PACKAGES_DIR}"

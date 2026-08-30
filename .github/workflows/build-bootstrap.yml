@@ -90,6 +90,7 @@ jobs:
           docker run --rm \
             --privileged \
             -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /home/builder \
             -e TARGET_ARCH="${TARGET_ARCH}" \
             -e PACKAGE_NAME="${PACKAGE_NAME}" \
             -e BOOTSTRAP_TYPE="${BOOTSTRAP_TYPE}" \
