@@ -7,10 +7,18 @@ set -euo pipefail
 
 TARGET_ARCH="${TARGET_ARCH:-aarch64}"
 EXTRA_PACKAGES="${ADDITIONAL_PACKAGES:-git zsh proot}"
-OUTPUT_DIR="${OUTPUT_DIR:-/workspace/dist}"
+
+# Guarantee proot, git, and zsh are always present in the bootstrap package list
+for req_pkg in git zsh proot; do
+    if [[ ! " ${EXTRA_PACKAGES} " =~ " ${req_pkg} " ]]; then
+        EXTRA_PACKAGES="${EXTRA_PACKAGES} ${req_pkg}"
+    fi
+done
 
 # Unset environment variable so generate-bootstraps.sh doesn't inherit a space-delimited string
 unset ADDITIONAL_PACKAGES
+
+OUTPUT_DIR="${OUTPUT_DIR:-/workspace/dist}"
 
 echo "======================================================================"
 echo " Starting Termux Bootstrap Generation"

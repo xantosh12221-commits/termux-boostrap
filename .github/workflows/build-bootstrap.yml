@@ -29,7 +29,7 @@ on:
       additional_packages:
         description: "Additional packages to include (space-separated)"
         required: false
-        default: "git zsh"
+        default: "git zsh proot"
         type: string
       create_release:
         description: "Publish as a GitHub Release"
@@ -81,7 +81,7 @@ jobs:
           TARGET_ARCH: ${{ github.event.inputs.target_arch || 'aarch64' }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name || 'com.antigem' }}
           BOOTSTRAP_TYPE: ${{ github.event.inputs.bootstrap_type || 'full' }}
-          ADDITIONAL_PACKAGES: ${{ github.event.inputs.additional_packages || 'git zsh' }}
+          ADDITIONAL_PACKAGES: ${{ github.event.inputs.additional_packages || 'git zsh proot' }}
         run: |
           mkdir -p "${GITHUB_WORKSPACE}/dist"
           chmod 777 "${GITHUB_WORKSPACE}/dist"
