@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Build Script: Custom Termux Bootstrap Generator for Android Apps
-# Target: Full base + apt + pkg + git + zsh + bash (aarch64)
+# Target: Full base + apt + pkg + git + zsh + proot + bash (aarch64)
 # ==============================================================================
 set -euo pipefail
 
 TARGET_ARCH="${TARGET_ARCH:-aarch64}"
-EXTRA_PACKAGES="${ADDITIONAL_PACKAGES:-git zsh}"
+EXTRA_PACKAGES="${ADDITIONAL_PACKAGES:-git zsh proot}"
 OUTPUT_DIR="${OUTPUT_DIR:-/workspace/dist}"
 
 # Unset environment variable so generate-bootstraps.sh doesn't inherit a space-delimited string
