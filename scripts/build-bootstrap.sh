@@ -256,13 +256,19 @@ echo "[*] Compressing into ${FINAL_ZIP_PATH}..."
 rm -f "${FINAL_ZIP_PATH}"
 zip -r9 "${FINAL_ZIP_PATH}" ./*
 
-# Copy built debs to dist folder
-mkdir -p "${OUTPUT_DIR}/debs"
-cp -r "${TERMUX_PACKAGES_DIR}/output"/*.deb "${OUTPUT_DIR}/debs/" || true
+# Package built debs into a single archive to avoid colon ':' filename issues in GitHub Actions upload-artifact v4
+mkdir -p "${OUTPUT_DIR}"
+if ls "${TERMUX_PACKAGES_DIR}/output"/*.deb 1> /dev/null 2>&1; then
+    echo "[*] Archiving built deb packages into debs.tar.gz..."
+    (cd "${TERMUX_PACKAGES_DIR}/output" && tar -czf "${OUTPUT_DIR}/debs.tar.gz" *.deb) || true
+fi
 
 # Generate SHA256 checksums
 cd "${OUTPUT_DIR}"
 sha256sum "${ZIP_NAME}" > "SHA256SUMS.txt"
+if [ -f "debs.tar.gz" ]; then
+    sha256sum "debs.tar.gz" >> "SHA256SUMS.txt"
+fi
 
 # Cleanup
 rm -rf "${BUILD_ROOTFS_TMP}"

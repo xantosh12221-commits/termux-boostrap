@@ -121,7 +121,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: termux-debs-${{ github.event.inputs.package_name || 'com.antigem' }}-${{ github.event.inputs.target_arch || 'aarch64' }}
-          path: dist/debs/*.deb
+          path: dist/debs.tar.gz
           if-no-files-found: warn
           retention-days: 14
 
@@ -146,5 +146,6 @@ jobs:
           files: |
             dist/*.zip
             dist/SHA256SUMS.txt
+            dist/debs.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
