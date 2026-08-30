@@ -138,9 +138,9 @@ export TERMUX_APP__PACKAGE_NAME="${PACKAGE_NAME}"
 
 for pkg in "${CORE_PACKAGES[@]}"; do
     echo "----------------------------------------------------------------------"
-    echo "[*] Building package: ${pkg} for arch ${TARGET_ARCH}..."
+    echo "[*] Building package: ${pkg} with dependencies (-s) for arch ${TARGET_ARCH}..."
     echo "----------------------------------------------------------------------"
-    if ./build-package.sh -a "${TARGET_ARCH}" "${pkg}"; then
+    if ./build-package.sh -s -a "${TARGET_ARCH}" "${pkg}"; then
         echo "[+] Successfully built ${pkg}"
     else
         echo "[!] Warning/Notice building ${pkg}, checking if deb was generated..."
