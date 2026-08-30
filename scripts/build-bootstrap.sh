@@ -8,15 +8,18 @@ set -euo pipefail
 PACKAGE_NAME="${PACKAGE_NAME:-com.antigem}"
 TARGET_ARCH="${TARGET_ARCH:-aarch64}"
 BOOTSTRAP_TYPE="${BOOTSTRAP_TYPE:-full}"
-ADDITIONAL_PACKAGES="${ADDITIONAL_PACKAGES:-git zsh}"
+EXTRA_PACKAGES="${ADDITIONAL_PACKAGES:-git zsh}"
 OUTPUT_DIR="${OUTPUT_DIR:-/workspace/dist}"
+
+# Unset environment variable so generate-bootstraps.sh doesn't inherit a space-delimited string
+unset ADDITIONAL_PACKAGES
 
 echo "======================================================================"
 echo " Starting Termux Bootstrap Generation"
 echo " Package Name         : ${PACKAGE_NAME}"
 echo " Target Architecture  : ${TARGET_ARCH}"
 echo " Bootstrap Type       : ${BOOTSTRAP_TYPE}"
-echo " Additional Packages  : ${ADDITIONAL_PACKAGES}"
+echo " Extra Packages       : ${EXTRA_PACKAGES}"
 echo " Output Directory     : ${OUTPUT_DIR}"
 echo "======================================================================"
 
@@ -58,7 +61,7 @@ mkdir -p "${OUTPUT_DIR}"
 # 3. Generate Bootstrap Archive with generate-bootstraps.sh
 # ------------------------------------------------------------------------------
 # Format additional packages as comma-separated list
-ADD_PKGS_CSV=$(echo "${ADDITIONAL_PACKAGES}" | tr ' ' ',')
+ADD_PKGS_CSV=$(echo "${EXTRA_PACKAGES}" | tr ' ' ',')
 
 echo "----------------------------------------------------------------------"
 echo "[*] Generating bootstrap for ${TARGET_ARCH} with extra packages: ${ADD_PKGS_CSV}..."
