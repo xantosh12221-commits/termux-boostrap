@@ -1,0 +1,149 @@
+name: Build Custom Termux Bootstrap (com.antigem)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_arch:
+        description: "Target CPU architecture"
+        required: true
+        default: "aarch64"
+        type: choice
+        options:
+          - aarch64
+          - arm
+          - x86_64
+          - i686
+      package_name:
+        description: "Android App Package Name"
+        required: true
+        default: "com.antigem"
+        type: string
+      bootstrap_type:
+        description: "Bootstrap Type (Full with apt/dpkg or Minimal)"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - full
+          - minimal
+      additional_packages:
+        description: "Additional packages to include (space-separated)"
+        required: false
+        default: "git zsh"
+        type: string
+      create_release:
+        description: "Publish as a GitHub Release"
+        required: false
+        default: true
+        type: boolean
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-bootstrap:
+    name: Build Bootstrap (${{ inputs.target_arch || 'aarch64' }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Free Disk Space on Runner
+        run: |
+          echo "=== Disk space before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af || true
+          echo "=== Disk space after cleanup ==="
+          df -h
+
+      - name: Pull Termux Package Builder Docker Image
+        run: |
+          docker pull ghcr.io/termux/package-builder:latest
+
+      - name: Build Bootstrap in Docker
+        id: build
+        env:
+          TARGET_ARCH: ${{ github.event.inputs.target_arch || 'aarch64' }}
+          PACKAGE_NAME: ${{ github.event.inputs.package_name || 'com.antigem' }}
+          BOOTSTRAP_TYPE: ${{ github.event.inputs.bootstrap_type || 'full' }}
+          ADDITIONAL_PACKAGES: ${{ github.event.inputs.additional_packages || 'git zsh' }}
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/dist"
+          chmod 777 "${GITHUB_WORKSPACE}/dist"
+          chmod +x "${GITHUB_WORKSPACE}/scripts/build-bootstrap.sh"
+
+          docker run --rm \
+            --privileged \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -e TARGET_ARCH="${TARGET_ARCH}" \
+            -e PACKAGE_NAME="${PACKAGE_NAME}" \
+            -e BOOTSTRAP_TYPE="${BOOTSTRAP_TYPE}" \
+            -e ADDITIONAL_PACKAGES="${ADDITIONAL_PACKAGES}" \
+            -e OUTPUT_DIR="/workspace/dist" \
+            ghcr.io/termux/package-builder:latest \
+            /bin/bash -c "cp -r /workspace/scripts/build-bootstrap.sh /home/builder/build.sh && /home/builder/build.sh"
+
+      - name: Verify Build Output
+        run: |
+          echo "=== Generated Distribution Files ==="
+          ls -lh dist/
+          if [ -f dist/SHA256SUMS.txt ]; then
+            cat dist/SHA256SUMS.txt
+          fi
+
+      - name: Upload Bootstrap ZIP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: termux-bootstrap-${{ github.event.inputs.package_name || 'com.antigem' }}-${{ github.event.inputs.target_arch || 'aarch64' }}
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Generated DEB Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: termux-debs-${{ github.event.inputs.package_name || 'com.antigem' }}-${{ github.event.inputs.target_arch || 'aarch64' }}
+          path: dist/debs/*.deb
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Create GitHub Release
+        if: ${{ (github.event.inputs.create_release == 'true' || github.event.inputs.create_release == true) && github.ref == 'refs/heads/main' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: bootstrap-${{ github.event.inputs.target_arch || 'aarch64' }}-${{ github.run_number }}
+          name: "Termux Bootstrap (${{ github.event.inputs.package_name || 'com.antigem' }} - ${{ github.event.inputs.target_arch || 'aarch64' }})"
+          body: |
+            ### Custom Termux Bootstrap Archive
+            - **Target Package Name:** `${{ github.event.inputs.package_name || 'com.antigem' }}`
+            - **Prefix:** `/data/data/${{ github.event.inputs.package_name || 'com.antigem' }}/files/usr`
+            - **Architecture:** `${{ github.event.inputs.target_arch || 'aarch64' }}`
+            - **Bootstrap Type:** `${{ github.event.inputs.bootstrap_type || 'full' }}`
+            - **Included Extras:** `${{ github.event.inputs.additional_packages || 'git zsh' }}`
+            
+            #### Checksums
+            ```
+            $(cat dist/SHA256SUMS.txt)
+            ```
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
